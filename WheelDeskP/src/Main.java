@@ -3,6 +3,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import Objects.Car;
+import Objects.DealerPrice;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -19,41 +21,38 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
-/**
- * WheelDesk - a simple JavaFX desktop app.
- *
- * Everything lives in this one file on purpose (no Maven, no separate
- * CSS file) so it can just be dropped into an Eclipse project that
- * already has the JavaFX jars on its build path.
- *
- * Screens:
- *  - Explore   : home/landing page, shows cars + dealer prices
- *  - Login     : shown when "MyDealership" menu item is clicked
- *  - Sign Up   : shown when "Register my dealership" link is clicked
- *  - Search    : shown after typing something in the top search bar
- */
+
 public class Main extends Application {
 
-    // ---------------------------------------------------------------
-    // Theme colors (flat colors only, no gradients)
-    // ---------------------------------------------------------------
-    private static final String COLOR_BACKGROUND = "#474747";/*check*/
-    private static final String COLOR_MENU_BAR    = "#ffffff";
-    private static final String COLOR_CARD        = "#565656";/*check*/
-    private static final String COLOR_CHIP        = "#4d4d4d";
-    private static final String COLOR_FIELD       = "#5c5c5c";/*check*/
-    private static final String COLOR_BUTTON      = "#6e6e6e";
-    private static final String COLOR_BUTTON_HOVER = "#808080";
-    private static final String COLOR_BORDER      = "#2f2f2f";/*check*/
-    private static final String COLOR_TEXT_LIGHT  = "#f2f2f2";/*check*/
-    private static final String COLOR_TEXT_MUTED  = "#cfcfcf";/*check*/
+    //
+    // Theme colors
+    // 
+    private static final String COLOR_BACKGROUND     = "#1c1d22";
+    private static final String COLOR_SURFACE         = "#26272e";
+    private static final String COLOR_SURFACE_ALT     = "#2f3038";
+    private static final String COLOR_MENU_BAR         = "#141519";
+    private static final String COLOR_CHIP             = "#33343d";
+    private static final String COLOR_FIELD            = "#2f3038";
+    private static final String COLOR_BORDER           = "#3a3b44";
+
+    private static final String COLOR_ACCENT           = "#5b8cff";
+    private static final String COLOR_ACCENT_HOVER     = "#4a76e0";
+    private static final String COLOR_ACCENT_MUTED     = "#3a4a7a";
+
+    private static final String COLOR_TEXT_LIGHT       = "#f2f3f7";
+    private static final String COLOR_TEXT_MUTED       = "#9a9ba8";
+    private static final String COLOR_TEXT_FAINT       = "#6d6e79";
+
+    private static final String FONT_FAMILY = "'Segoe UI', 'Helvetica Neue', Arial, sans-serif";
 
     // Root layout: top = menu + search bar, center = whichever screen is active
     private BorderPane rootLayout;
@@ -70,7 +69,10 @@ public class Main extends Application {
         cars = buildSampleCars();
 
         rootLayout = new BorderPane();
-        rootLayout.setStyle("-fx-background-color: " + COLOR_BACKGROUND + ";");
+        rootLayout.setStyle(
+                "-fx-background-color: " + COLOR_BACKGROUND + ";" +
+                "-fx-font-family: " + FONT_FAMILY + ";"
+        );
         rootLayout.setTop(buildTopBar());
 
         showExplore();
@@ -84,18 +86,24 @@ public class Main extends Application {
         primaryStage.show();
     }
 
-    // =================================================================
+    //
     // TOP BAR: menu (Explore / MyDealership) + search bar
-    // =================================================================
+    //
 
     private VBox buildTopBar() {
-        // --- Menu bar ---
+        //Menu bar
         MenuBar menuBar = new MenuBar();
-        menuBar.setStyle("-fx-background-color: " + COLOR_MENU_BAR + ";");
+        menuBar.setStyle(
+                /*"-fx-background-color: " + COLOR_MENU_BAR + ";" +*/
+                "-fx-border-color: transparent transparent " + COLOR_BORDER + " transparent;" +
+                "-fx-border-width: 0 0 1 0;"
+        );
 
-        Menu menu = new Menu("Menu");
-        menu.setStyle("-fx-font-size: 16px;"
-        		+ " -fx-font-weight: bold;"
+        Menu menu = new Menu("WheelDesk");
+        menu.setStyle(
+                "-fx-font-size: 15px;" +
+                "-fx-font-weight: bold;" /*+
+                "-fx-text-fill: " + COLOR_TEXT_LIGHT + ";"*/
         );
 
         MenuItem exploreItem = new MenuItem("Explore");
@@ -106,33 +114,37 @@ public class Main extends Application {
 
         menu.getItems().addAll(exploreItem, myDealershipItem);
         menuBar.getMenus().add(menu);
+        menuBar.setPadding(new Insets(4, 8, 4, 8));
 
-        // --- Search bar (always visible, on top of every page) ---
+        // Search bar (always visible, on top of every page)
         searchField = new TextField();
         searchField.setPromptText("Search for a car e.g. \"Corolla\"...");
         searchField.setStyle(
-                "-fx-background-color: " + "#ffffff" + ";" +
-                "-fx-text-fill: " + "#000" + ";" +
-                "-fx-prompt-text-fill: #bdbdbd;" +
-                "-fx-background-radius: 50;" +
-                "-fx-border-radius: 50;" +
-                "-fx-padding: 8 12 8 12;"
+                "-fx-background-color: " + COLOR_FIELD + ";" +
+                "-fx-text-fill: " + COLOR_TEXT_LIGHT + ";" +
+                "-fx-prompt-text-fill: " + COLOR_TEXT_FAINT + ";" +
+                "-fx-background-radius: 8;" +
+                "-fx-border-radius: 8;" +
+                "-fx-border-color: " + COLOR_BORDER + ";" +
+                "-fx-border-width: 1;" +
+                "-fx-padding: 9 14 9 14;" +
+                "-fx-font-size: 13px;"
         );
         searchField.setOnAction(e -> performSearch());
         HBox.setHgrow(searchField, Priority.ALWAYS);
 
-        Button searchButton = styledButton("Search");
+        Button searchButton = styledButton("Search", true);
         searchButton.setOnAction(e -> performSearch());
 
         HBox searchBar = new HBox(10, searchField, searchButton);
         searchBar.setAlignment(Pos.CENTER);
-        searchBar.setPadding(new Insets(12, 20, 12, 20));
+        searchBar.setPadding(new Insets(14, 24, 14, 24));
         searchBar.setStyle("-fx-background-color: " + COLOR_BACKGROUND + ";");
 
         VBox topBar = new VBox(menuBar, searchBar);
         return topBar;
     }
-    
+
     /**
      * A function to search specific cars displayed on the Explore page
      */
@@ -144,7 +156,7 @@ public class Main extends Application {
 
         List<Car> results = new ArrayList<>();
         for (Car car : cars) {
-            String combined = (car.name + " " + car.model).toLowerCase();
+            String combined = (car.getName() + " " + car.getModel()).toLowerCase();
             if (combined.contains(query.toLowerCase())) {
                 results.add(car);
             }
@@ -163,7 +175,11 @@ public class Main extends Application {
     private void showExplore() {
         rootLayout.setCenter(buildExploreView());
     }
-
+    
+    /**
+     * Helper function to display the cars
+     * @return page with list of the cars (Page has privilege access. Dealership admin should be able to delete cars they have posted ***To Do***)
+     */
     private Node buildExploreView() {
         VBox headerBox = buildPageHeader(
                 "Explore Cars",
@@ -174,7 +190,8 @@ public class Main extends Application {
 
         ScrollPane scrollPane = new ScrollPane(carListBox);
         scrollPane.setFitToWidth(true);
-        scrollPane.setStyle("-fx-background-color: transparent;");
+        scrollPane.setStyle("-fx-background-color: transparent;"
+        		+ " -fx-background: transparent;");
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
 
         VBox page = new VBox(headerBox, scrollPane);
@@ -182,11 +199,14 @@ public class Main extends Application {
         return page;
     }
 
-    // Builds the list of car cards, each showing name, model and every
-    // dealer's price for that car. Reused by both Explore and Search.
+    /**
+     * Builds the list of car cards, each showing name, model and every dealer's price for that car. Reused by both Explore and Search
+     * @param carsToShow
+     * @return
+     */
     private VBox buildCarListBox(List<Car> carsToShow) {
-        VBox container = new VBox(16);
-        container.setPadding(new Insets(20));
+        VBox container = new VBox(14);
+        container.setPadding(new Insets(20, 24, 24, 24));
 
         if (carsToShow.isEmpty()) {
             Label empty = new Label("No cars found.");
@@ -195,37 +215,62 @@ public class Main extends Application {
             return container;
         }
 
-        NumberFormat currency = NumberFormat.getCurrencyInstance(new Locale("en", "ZA"));
+        NumberFormat currency = NumberFormat.getCurrencyInstance(new Locale("en", "ZA")); // Come back to this to check what it does!!!!! I think it's for the currency and stuff
+        currency.setMaximumFractionDigits(0);
 
         for (Car car : carsToShow) {
-            VBox card = new VBox(10);
-            card.setPadding(new Insets(16));
+            VBox card = new VBox(12);
+            card.setPadding(new Insets(18, 20, 18, 20));
             card.setStyle(
-                    "-fx-background-color: #fff;"
+                    "-fx-background-color: " + COLOR_SURFACE + ";" +
+                    "-fx-background-radius: 10;" +
+                    "-fx-border-color: " + COLOR_BORDER + ";" +
+                    "-fx-border-radius: 10;" +
+                    "-fx-border-width: 1;"
+            );
+            card.setEffect(subtleShadow());
+
+            Label title = new Label(car.getName() + " " + car.getModel());
+            title.setStyle(
+                    "-fx-text-fill: " + COLOR_TEXT_LIGHT + ";" +
+                    "-fx-font-size: 16px;" +
+                    "-fx-font-weight: bold;"
             );
 
-            Label title = new Label(car.name + " " + car.model);
-            title.setStyle("-fx-text-fill: black; -fx-font-size: 16px; -fx-font-weight: bold;");
+            // Lowest price is called out so the comparison is easy to read at a glance
+            double lowest = Double.MAX_VALUE;
+            for (DealerPrice dp : car.getDealerPrices()) {
+                lowest = Math.min(lowest, dp.getPrice());
+            }
 
             FlowPane pricesPane = new FlowPane();
-            pricesPane.setHgap(16);
-            pricesPane.setVgap(8);
+            pricesPane.setHgap(10);
+            pricesPane.setVgap(10);
 
-            for (DealerPrice dp : car.dealerPrices) {
-                HBox chip = new HBox(8);
-                chip.setPadding(new Insets(8, 12, 8, 12));
+            for (DealerPrice dp : car.getDealerPrices()) {
+                boolean isLowest = dp.getPrice() == lowest;
+
+                HBox chip = new HBox(10);
+                chip.setAlignment(Pos.CENTER_LEFT);
+                chip.setPadding(new Insets(8, 14, 8, 14));
                 chip.setStyle(
-                        "-fx-background-color: #0b9ebf;" +
-                        "-fx-background-radius: 4;" /*+
-                        "-fx-border-color: " + COLOR_BORDER + ";" +
-                        "-fx-border-radius: 4;"*/
+                        "-fx-background-color: " + (isLowest ? COLOR_ACCENT_MUTED : COLOR_CHIP) + ";" +
+                        "-fx-background-radius: 6;" +
+                        (isLowest ? "-fx-border-color: " + COLOR_ACCENT + "; -fx-border-width: 1; -fx-border-radius: 6;" : "")
                 );
 
-                Label dealerName = new Label(dp.dealerName);
-                dealerName.setStyle("-fx-text-fill: black; -fx-font-size: 12px;");
+                Label dealerName = new Label(dp.getDealerName());
+                dealerName.setStyle(
+                        "-fx-text-fill: " + COLOR_TEXT_MUTED + ";" +
+                        "-fx-font-size: 12px;"
+                );
 
-                Label price = new Label(currency.format(dp.price));
-                price.setStyle("-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold;");
+                Label price = new Label(currency.format(dp.getPrice()));
+                price.setStyle(
+                        "-fx-text-fill: " + (isLowest ? COLOR_ACCENT : COLOR_TEXT_LIGHT) + ";" +
+                        "-fx-font-size: 13px;" +
+                        "-fx-font-weight: bold;"
+                );
 
                 chip.getChildren().addAll(dealerName, price);
                 pricesPane.getChildren().add(chip);
@@ -238,28 +283,37 @@ public class Main extends Application {
         return container;
     }
 
-    // =================================================================
-    // LOGIN PAGE (shown when "MyDealership" menu item is clicked)
-    // =================================================================
+    //
+    // LOGIN PAGE
+    //
 
     private void showLogin() {
         rootLayout.setCenter(buildLoginView());
     }
-
+    /**
+     * Helper function to build the login page
+     * @return
+     */
     private Node buildLoginView() {
-        VBox card = new VBox(14);
+        VBox card = new VBox(16);
         card.setMaxWidth(380);
-        card.setPadding(new Insets(30));
+        card.setPadding(new Insets(36));
         card.setAlignment(Pos.CENTER);
         card.setStyle(
-                "-fx-background-color: " + COLOR_CARD + ";" +
-                "-fx-background-radius: 8;" +
+                "-fx-background-color: " + COLOR_SURFACE + ";" +
+                "-fx-background-radius: 12;" +
                 "-fx-border-color: " + COLOR_BORDER + ";" +
-                "-fx-border-radius: 8;"
+                "-fx-border-radius: 12;" +
+                "-fx-border-width: 1;"
         );
+        card.setEffect(subtleShadow());
 
         Label title = new Label("Dealership Login");
-        title.setStyle("-fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold;");
+        title.setStyle(
+                "-fx-text-fill: " + COLOR_TEXT_LIGHT + ";" +
+                "-fx-font-size: 21px;" +
+                "-fx-font-weight: bold;"
+        );
 
         Label subtitle = new Label("Sign in to manage your dealership listings.");
         subtitle.setStyle("-fx-text-fill: " + COLOR_TEXT_MUTED + "; -fx-font-size: 12px;");
@@ -274,20 +328,20 @@ public class Main extends Application {
         passwordField.setPromptText("Password");
         styleAuthField(passwordField);
 
-        Button loginButton = styledButton("Log In");
+        Button loginButton = styledButton("Log In", true);
         loginButton.setMaxWidth(Double.MAX_VALUE);
         loginButton.setOnAction(e -> showInfoAlert("Login functionality not yet connected."));
 
         Hyperlink forgotPasswordLink = new Hyperlink("Forgot password?");
-        forgotPasswordLink.setStyle("-fx-text-fill: " + COLOR_TEXT_MUTED + ";");
+        forgotPasswordLink.setStyle("-fx-text-fill: " + COLOR_TEXT_MUTED + "; -fx-font-size: 12px;");
         // does nothing for now.
         forgotPasswordLink.setOnAction(e -> { /* no-op for now */ });
 
         Hyperlink registerLink = new Hyperlink("Register my dealership");
-        registerLink.setStyle("-fx-text-fill: " + COLOR_TEXT_MUTED + ";");
+        registerLink.setStyle("-fx-text-fill: " + COLOR_ACCENT + "; -fx-font-size: 12px;");
         registerLink.setOnAction(e -> showSignup());
 
-        VBox linksBox = new VBox(6, forgotPasswordLink, registerLink);
+        VBox linksBox = new VBox(4, forgotPasswordLink, registerLink);
         linksBox.setAlignment(Pos.CENTER);
 
         card.getChildren().addAll(title, subtitle, emailField, passwordField, loginButton, linksBox);
@@ -295,33 +349,39 @@ public class Main extends Application {
         VBox page = new VBox(card);
         page.setAlignment(Pos.CENTER);
         page.setPadding(new Insets(40));
-        page.setStyle("-fx-background-color: white;");
+        page.setStyle("-fx-background-color: " + COLOR_BACKGROUND + ";");
         VBox.setVgrow(page, Priority.ALWAYS);
         return page;
     }
 
-    // =================================================================
-    // SIGN UP PAGE (shown when "Register my dealership" is clicked)
-    // =================================================================
+    //
+    // SIGN UP PAGE
+    //
 
     private void showSignup() {
         rootLayout.setCenter(buildSignupView());
     }
 
     private Node buildSignupView() {
-        VBox card = new VBox(14);
+        VBox card = new VBox(16);
         card.setMaxWidth(420);
-        card.setPadding(new Insets(30));
+        card.setPadding(new Insets(36));
         card.setAlignment(Pos.CENTER);
         card.setStyle(
-                "-fx-background-color: " + COLOR_CARD + ";" +
-                "-fx-background-radius: 8;" +
+                "-fx-background-color: " + COLOR_SURFACE + ";" +
+                "-fx-background-radius: 12;" +
                 "-fx-border-color: " + COLOR_BORDER + ";" +
-                "-fx-border-radius: 8;"
+                "-fx-border-radius: 12;" +
+                "-fx-border-width: 1;"
         );
+        card.setEffect(subtleShadow());
 
         Label title = new Label("Register My Dealership");
-        title.setStyle("-fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold;");
+        title.setStyle(
+                "-fx-text-fill: " + COLOR_TEXT_LIGHT + ";" +
+                "-fx-font-size: 21px;" +
+                "-fx-font-weight: bold;"
+        );
 
         Label subtitle = new Label("Create an account to list your dealership on WheelDesk.");
         subtitle.setStyle("-fx-text-fill: " + COLOR_TEXT_MUTED + "; -fx-font-size: 12px;");
@@ -344,12 +404,12 @@ public class Main extends Application {
         confirmPasswordField.setPromptText("Confirm password");
         styleAuthField(confirmPasswordField);
 
-        Button registerButton = styledButton("Register Dealership");
+        Button registerButton = styledButton("Register Dealership", true);
         registerButton.setMaxWidth(Double.MAX_VALUE);
         registerButton.setOnAction(e -> showInfoAlert("Registration functionality not yet connected."));
 
         Hyperlink backToLoginLink = new Hyperlink("Already have an account? Log in");
-        backToLoginLink.setStyle("-fx-text-fill: " + COLOR_TEXT_MUTED + ";");
+        backToLoginLink.setStyle("-fx-text-fill: " + COLOR_ACCENT + "; -fx-font-size: 12px;");
         backToLoginLink.setOnAction(e -> showLogin());
 
         card.getChildren().addAll(title, subtitle, dealershipNameField, emailField,
@@ -358,41 +418,40 @@ public class Main extends Application {
         VBox page = new VBox(card);
         page.setAlignment(Pos.CENTER);
         page.setPadding(new Insets(40));
-        page.setStyle("-fx-background-color: white;");
+        page.setStyle("-fx-background-color: " + COLOR_BACKGROUND + ";");
         VBox.setVgrow(page, Priority.ALWAYS);
         return page;
     }
 
-    // =================================================================
+    //
     // SEARCH RESULTS PAGE
-    // =================================================================
-
+    //
+    
+    /**
+     * Helper function to build the results page
+     * @param query
+     * @param results
+     * @return
+     */
     private Node buildSearchResultsView(String query, List<Car> results) {
-        Button backButton = new Button("\u2190 Back");
-        backButton.setStyle(
-                "-fx-background-color: " + COLOR_FIELD + ";" +
-                "-fx-text-fill: " + COLOR_TEXT_LIGHT + ";" +
-                "-fx-background-radius: 4;" +
-                "-fx-padding: 6 14 6 14;" +
-                "-fx-cursor: hand;"
-        );
+        Button backButton = styledButton("\u2190 Back", false);
         backButton.setOnAction(e -> rootLayout.setCenter(previousView != null ? previousView : buildExploreView()));
 
         HBox topBar = new HBox(backButton);
         topBar.setAlignment(Pos.CENTER_LEFT);
-        topBar.setPadding(new Insets(20, 20, 0, 20));
+        topBar.setPadding(new Insets(20, 24, 0, 24));
 
         VBox headerBox = buildPageHeader(
                 "Search results for \"" + query + "\"",
                 results.size() + " car" + (results.size() == 1 ? "" : "s") + " found"
         );
-        headerBox.setPadding(new Insets(12, 20, 0, 20));
+        headerBox.setPadding(new Insets(12, 24, 0, 24));
 
         VBox carListBox = buildCarListBox(results);
 
         ScrollPane scrollPane = new ScrollPane(carListBox);
         scrollPane.setFitToWidth(true);
-        scrollPane.setStyle("-fx-background-color: transparent;");
+        scrollPane.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
 
         VBox page = new VBox(topBar, headerBox, scrollPane);
@@ -400,48 +459,80 @@ public class Main extends Application {
         return page;
     }
 
-    // =================================================================
+    //
     // Small reusable helpers
-    // =================================================================
+    //
 
     private VBox buildPageHeader(String headingText, String subheadingText) {
         Label heading = new Label(headingText);
-        heading.setStyle("-fx-text-fill: white; -fx-font-size: 22px; -fx-font-weight: bold;");
+        heading.setStyle(
+                "-fx-text-fill: " + COLOR_TEXT_LIGHT + ";" +
+                "-fx-font-size: 23px;" +
+                "-fx-font-weight: bold;"
+        );
 
         Label subheading = new Label(subheadingText);
         subheading.setStyle("-fx-text-fill: " + COLOR_TEXT_MUTED + "; -fx-font-size: 13px;");
 
         VBox headerBox = new VBox(4, heading, subheading);
-        headerBox.setPadding(new Insets(20, 20, 0, 20));
+        headerBox.setPadding(new Insets(20, 24, 0, 24));
         return headerBox;
     }
 
     private void styleAuthField(TextField field) {
         field.setPrefWidth(300);
         field.setStyle(
-                "-fx-background-color: " + COLOR_CHIP + ";" +
+                "-fx-background-color: " + COLOR_FIELD + ";" +
                 "-fx-text-fill: " + COLOR_TEXT_LIGHT + ";" +
-                "-fx-prompt-text-fill: #b0b0b0;" +
-                "-fx-background-radius: 4;" +
+                "-fx-prompt-text-fill: " + COLOR_TEXT_FAINT + ";" +
+                "-fx-background-radius: 6;" +
                 "-fx-border-color: " + COLOR_BORDER + ";" +
-                "-fx-border-radius: 4;" +
-                "-fx-padding: 8 10 8 10;"
+                "-fx-border-radius: 6;" +
+                "-fx-border-width: 1;" +
+                "-fx-padding: 9 12 9 12;" +
+                "-fx-font-size: 13px;"
         );
     }
 
-    private Button styledButton(String text) {
+    /**
+     * @param primary true for the main call-to-action style (accent fill), false for a lower-emphasis secondary style (outlined).
+     */
+    private Button styledButton(String text, boolean primary) {
         Button button = new Button(text);
-        String baseStyle =
-                "-fx-background-color: " + COLOR_BUTTON + ";" +
-                "-fx-text-fill: white;" +
-                "-fx-background-radius: 4;" +
-                "-fx-padding: 8 18 8 18;" +
+
+        String baseStyle = primary
+                ? "-fx-background-color: " + COLOR_ACCENT + ";" +
+                  "-fx-text-fill: white;"
+                : "-fx-background-color: " + COLOR_SURFACE_ALT + ";" +
+                  "-fx-text-fill: " + COLOR_TEXT_LIGHT + ";" +
+                  "-fx-border-color: " + COLOR_BORDER + ";" +
+                  "-fx-border-width: 1;" +
+                  "-fx-border-radius: 6;";
+
+        String common =
+                "-fx-background-radius: 6;" +
+                "-fx-padding: 9 18 9 18;" +
                 "-fx-cursor: hand;" +
+                "-fx-font-size: 13px;" +
                 "-fx-font-weight: bold;";
-        button.setStyle(baseStyle);
-        button.setOnMouseEntered(e -> button.setStyle(baseStyle.replace(COLOR_BUTTON, COLOR_BUTTON_HOVER)));
-        button.setOnMouseExited(e -> button.setStyle(baseStyle));
+
+        String finalBase = baseStyle + common;
+        String hoverStyle = primary
+                ? finalBase.replace(COLOR_ACCENT, COLOR_ACCENT_HOVER)
+                : finalBase.replace(COLOR_SURFACE_ALT, COLOR_CHIP);
+
+        button.setStyle(finalBase);
+        button.setOnMouseEntered(e -> button.setStyle(hoverStyle));
+        button.setOnMouseExited(e -> button.setStyle(finalBase));
         return button;
+    }
+
+    private DropShadow subtleShadow() {
+        DropShadow shadow = new DropShadow();
+        shadow.setColor(Color.rgb(0, 0, 0, 0.35));
+        shadow.setRadius(14);
+        shadow.setOffsetY(4);
+        return shadow;
     }
 
     private void showInfoAlert(String message) {
@@ -450,12 +541,14 @@ public class Main extends Application {
         alert.showAndWait();
     }
 
-    // =================================================================
+    //
     // Sample data (name, model, and prices from different dealerships)
-    // =================================================================
+    //
 
     private List<Car> buildSampleCars() {
         List<Car> list = new ArrayList<>();
+
+        // I have this data as demo. I will soon grab the actual data from my database
 
         list.add(new Car("Toyota", "Corolla", new DealerPrice[] {
                 new DealerPrice("CBD Motors", 349999),
@@ -494,32 +587,6 @@ public class Main extends Application {
         }));
 
         return list;
-    }
-
-    // =================================================================
-    // Simple data holder classes (kept in this file to avoid extra files)
-    // =================================================================
-
-    private static class Car {
-        String name;
-        String model;
-        DealerPrice[] dealerPrices;
-
-        Car(String name, String model, DealerPrice[] dealerPrices) {
-            this.name = name;
-            this.model = model;
-            this.dealerPrices = dealerPrices;
-        }
-    }
-
-    private static class DealerPrice {
-        String dealerName;
-        double price;
-
-        DealerPrice(String dealerName, double price) {
-            this.dealerName = dealerName;
-            this.price = price;
-        }
     }
 
     public static void main(String[] args) {
