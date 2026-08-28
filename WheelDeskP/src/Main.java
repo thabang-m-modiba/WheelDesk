@@ -10,7 +10,7 @@ import Objects.Car;
 import Objects.DealerPrice;
 import Objects.Dealership;
 import Classes.DealershipController;
-
+import Classes.LoginController;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -336,7 +336,19 @@ public class Main extends Application {
 
         Button loginButton = styledButton("Log In", true);
         loginButton.setMaxWidth(Double.MAX_VALUE);
-        loginButton.setOnAction(e -> showInfoAlert("Login functionality not yet connected."));
+        loginButton.setOnAction(e -> {
+        	String email = emailField.getText();
+        	String password = passwordField.getText();
+        	// Validate the email
+            if(!isValidEmail(email)) {
+            	showInfoAlert("Error: Invalid Email!");
+            	return;
+            }
+            
+            // Create the login controller
+            LoginController loginUser = new LoginController(email, password);
+            loginUser.loginUser();
+        });
 
         Hyperlink forgotPasswordLink = new Hyperlink("Forgot password?");
         forgotPasswordLink.setStyle("-fx-text-fill: " + COLOR_TEXT_MUTED + "; -fx-font-size: 12px;");
