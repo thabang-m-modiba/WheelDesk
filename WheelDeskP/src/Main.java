@@ -11,6 +11,7 @@ import Objects.DealerPrice;
 import Objects.Dealership;
 import Classes.DealershipController;
 import Classes.LoginController;
+import Classes.userQuery;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -26,6 +27,7 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.BorderPane;
@@ -69,6 +71,10 @@ public class Main extends Application {
 
     // list of cars, used by both the Explore page and Search
     private List<Car> cars;
+    
+    // Login state
+    private boolean loggedIn = false;
+    private String loggedInEmail;
 
     @Override
     public void start(Stage primaryStage) {
@@ -199,10 +205,105 @@ public class Main extends Application {
         scrollPane.setStyle("-fx-background-color: transparent;"
         		+ " -fx-background: transparent;");
         VBox.setVgrow(scrollPane, Priority.ALWAYS);
-
-        VBox page = new VBox(headerBox, scrollPane);
-        page.setStyle("-fx-background-color: " + COLOR_BACKGROUND + ";");
+        VBox page = new VBox();
+        if(loggedIn) {
+        	page.getChildren().addAll(buildPostComposer());
+        }
+        
+        page.getChildren().addAll(headerBox, scrollPane);
+        /*VBox page = new VBox(headerBox, scrollPane);
+        page.setStyle("-fx-background-color: " + COLOR_BACKGROUND + ";");*/
         return page;
+    }
+    
+ // Composer shown at the top of Explore once a dealer is logged in.
+    private Node buildPostComposer() {
+        VBox card = new VBox(10);
+        card.setPadding(new Insets(18, 20, 18, 20));
+        card.setStyle(
+                "-fx-background-color: " + COLOR_SURFACE_ALT + ";" +
+                "-fx-background-radius: 10;" +
+                "-fx-border-color: " + COLOR_ACCENT + ";" +
+                "-fx-border-radius: 10;" +
+                "-fx-border-width: 1;"
+        );
+        card.setEffect(subtleShadow());
+
+        HBox topRow = new HBox();
+        topRow.setAlignment(Pos.CENTER_LEFT);
+        
+        userQuery getDealerShipInfo = new userQuery(loggedInEmail);
+
+        VBox titleBox = new VBox(2);
+        Label title = new Label("Welcome back, " + getDealerShipInfo.username());
+        title.setStyle(
+                "-fx-text-fill: " + COLOR_TEXT_LIGHT + ";" +
+                "-fx-font-size: 15px;" +
+                "-fx-font-weight: bold;"
+        );
+        Label subtitle = new Label("Signed in as " + loggedInEmail);
+        subtitle.setStyle("-fx-text-fill: " + COLOR_TEXT_MUTED + "; -fx-font-size: 11px;");
+        titleBox.getChildren().addAll(title, subtitle);
+
+        HBox spacer = new HBox();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Hyperlink logoutLink = new Hyperlink("Log out");
+        logoutLink.setStyle("-fx-text-fill: " + COLOR_TEXT_MUTED + "; -fx-font-size: 12px;");
+        logoutLink.setOnAction(e -> {
+            loggedIn = false;
+            loggedInEmail = null;
+            showExplore();
+        });
+
+        topRow.getChildren().addAll(titleBox, spacer, logoutLink);
+
+        /*TextArea postField = new TextArea();
+        postField.setPromptText("New stock, price drops, dealership news...");*/
+        
+        // Get Car name
+        TextField carName = new TextField();
+        carName.setPromptText("Car model/ name");
+        styleAuthField(carName);
+        
+        // Get Car Price
+        TextField carPrice = new TextField();
+        carPrice.setPromptText("Dearship price");
+        styleAuthField(carPrice);
+
+        HBox actionsRow = new HBox();
+        actionsRow.setAlignment(Pos.CENTER_RIGHT);
+
+        Button postButton = styledButton("Post", true);
+        postButton.setOnAction(e ->{
+        	String name = carName.getText();
+        	String price = carPrice.getText();
+        	
+        	// Validate the user inputs here my man
+        	// Add validation
+            if (name.isEmpty() || price.isEmpty()) {
+                showInfoAlert("Error: All fields are required.");
+                return;
+            }
+            try {
+            	int p = Integer.parseInt(price);
+            }catch(NumberFormatException ee) {
+            	ee.printStackTrace();
+            	showInfoAlert("Invalid Number!");
+            	return;
+            }
+        	// Create user query
+        	userQuery query = new userQuery(loggedInEmail);
+        	query.post(query.username(), name, price);
+        	showInfoAlert("Success!");
+        });
+        actionsRow.getChildren().add(postButton);
+
+        card.getChildren().addAll(topRow, carName, carPrice, actionsRow);
+
+        VBox wrapper = new VBox(card);
+        wrapper.setPadding(new Insets(20, 24, 0, 24));
+        return wrapper;
     }
 
     /**
@@ -347,7 +448,13 @@ public class Main extends Application {
             
             // Create the login controller
             LoginController loginUser = new LoginController(email, password);
-            loginUser.loginUser();
+            boolean success = loginUser.loginUser();
+            
+            if(success) {
+            	loggedIn = true;
+            	loggedInEmail = email;
+            	showExplore();
+            }
         });
 
         Hyperlink forgotPasswordLink = new Hyperlink("Forgot password?");

@@ -28,7 +28,12 @@ public class LoginController {
 		this.password = password;
 	}
 	
-	public void loginUser() {
+	/**
+	 * @return true if the email/password matched a dealer record, false
+	 *         otherwise (wrong password, unknown email, or a DB error -
+	 *         an alert is shown to the user in every failure case).
+	 */
+	public boolean loginUser() {
 		String sql = "SELECT pwd FROM dealers WHERE dealer_email = ?;";
 		//Dbh dbh = new Dbh();
 		try {
@@ -41,19 +46,22 @@ public class LoginController {
 				String enteredHash = hashPassword(password);
 				String userPwd = result.getString("pwd");
 				if(enteredHash.equals(userPwd)) {
-					
-					showInfoAlert("Success!");
+					return true;
 				}else {
 					showInfoAlert("Wrong Password!");
+					return false;
 				}
 			}else {
 				showInfoAlert("User not found!");
+				return false;
 			}
 			
 			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			showInfoAlert("Something went wrong - please try again.");
+			return false;
 		}
 	}
 	
